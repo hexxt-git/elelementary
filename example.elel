@@ -1,9 +1,20 @@
 <my_element>
-    test
+    test # comment
     <my_nested_elemnt>
-        texxxt
-    </my_nested_element>
+        <my_nested_elemnt>
+            texxxt
+        </>
+    </>
     <goofy_aah>
         we do a little goofin'
-    </goofy_aah>
-</my_element>
+    </>
+    <goofy_aah>
+        we do a little goofin'
+    </>
+    <goofy_aah>
+        we do a little goofin'
+    </>
+</>
+<my_other_element>
+    E
+</>
