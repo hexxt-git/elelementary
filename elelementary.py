@@ -18,14 +18,18 @@ class Element:
         return None
 
     def get_child_deep(self, id, i=0):
-        if self.id == id and i != 0: return self
+        if self.id == id: return self
         for child in self.children:
-            potential_child = child.get_child(id, i+1)
+            potential_child = child.get_child_deep(id, i+1)
             if potential_child is not None: return potential_child
         return None
     
     def bind(self, file):
         pass
+    
+    def print(self, i=0):
+        print('-'*4*i+'>'+self.id)
+        [child.print(i+1) for child in self.children]
     
     def open(self):
         pass
@@ -36,24 +40,25 @@ def load_elel(path):
 
     file = re.sub('#.*', '', file) # ignore comments
     file = re.sub('\s+', ' ', file) # ignore multiple whites
-    element_starts = [i.span() for i in re.finditer('<[^/\s]+>', file)] # find where elements start and their ids position
+    element_starts = [i.span() for i in re.finditer('<[^/\s]*>', file)] # find where elements start and their ids position
     element_ends = [i.start() for i in re.finditer('</>', file)] # find where elements end
 
-    if len(element_starts) > len(element_ends): # assure all elements are closed
+    if len(element_starts) != len(element_ends): # assure all elements are closed
         print(file)
         raise Exception('unclosed elements')
 
-    current_position = 0
+    current_position = ['master']
     for e in range(len(element_starts)): # loop through each new element declaration
         new_element_id = file[element_starts[e][0]+1:element_starts[e][1]-1] # read the elements id
         new_elemnt = Element(new_element_id) # create the element
-        current_position += 1 # we just went one deeper so we increment the position
 
-        closed = len([end for end in element_ends if end > element_starts[e-1][1] and end < element_starts[e][1]]) # all closed since last element
-        current_position -= closed
-        print('-'*current_position + '>' + new_element_id )
+        closed = len([end for end in element_ends if end > element_starts[e-1][1] and end < element_starts[e][1]]) # how many elements were closed
+        if closed != 0:
+            current_position = current_position[0:-closed] # pop out when elements are closed
 
-        master.add_child(new_elemnt)
+        master.get_child_deep(current_position[-1]).add_child(new_elemnt)
+
+        current_position.append(new_element_id)
 
     return master
 
