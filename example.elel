@@ -1,22 +1,51 @@
-<my_element>
-    <my_nested_elemnt>
-        <my_nested_elemnt>
-            nested elements 💀
+masters text
+<a1>
+    a1 text
+    a1 text2
+    <b1>
+        b1 text
+        <c1>
+            c1 text
+        </>
+        <c2>
+            c2 text
+        </>
+        <c3>
+            c3 text
         </>
     </>
-    <element>
-        ided elements 💀
-    </>
-    <element>
-        same id 💀
-        <issue>
-         i wont be fixing this
+    <b2>
+        b2 text
+        <cc1>
+            cc1 text
+        </>
+        <cc2>
+            cc2 text
+        </>
+        <cc3>
+            cc3 text
         </>
     </>
-    <>
-        idless elements 💀
+    <b3>
+        b3 text
+        <ccc1>
+            ccc1 text
+        </>
+        b3 text 2
+        <ccc2>
+            ccc2 text
+        </>
+        <ccc3>
+            ccc3 text
+        </>
     </>
 </>
-<my_other_element>
-    E
+<a2>
+    a2 text
+    <bb1>
+        bb1 text
+    </>
+</>
+<a3>
+    a3 text
 </>

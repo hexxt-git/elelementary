@@ -6,6 +6,7 @@ import re
 class Element:
     def __init__(self, id):
         self.id = id
+        self.text = ''
         self.children = []
         
     def add_child(self, child):
@@ -28,7 +29,7 @@ class Element:
         pass
     
     def print(self, i=0):
-        print('-'*4*i+'>'+self.id)
+        print('-'*4*i+'>' + self.id + ': ' + self.text)
         [child.print(i+1) for child in self.children]
     
     def open(self):
@@ -36,31 +37,48 @@ class Element:
 
 def load_elel(path):
     file = open(path, 'r').read()
-    master = Element('master')
-
     file = re.sub('#.*', '', file) # ignore comments
-    file = re.sub('\s+', ' ', file) # ignore multiple whites
-    element_starts = [i.span() for i in re.finditer('<[^/\s]*>', file)] # find where elements start and their ids position
-    element_ends = [i.start() for i in re.finditer('</>', file)] # find where elements end
 
-    if len(element_starts) != len(element_ends): # assure all elements are closed
-        print(file)
-        raise Exception('unclosed elements')
+    code_list = file.splitlines()
 
-    current_position = ['master']
-    for e in range(len(element_starts)): # loop through each new element declaration
-        new_element_id = file[element_starts[e][0]+1:element_starts[e][1]-1] # read the elements id
-        new_elemnt = Element(new_element_id) # create the element
 
-        closed = len([end for end in element_ends if end > element_starts[e-1][1] and end < element_starts[e][1]]) # how many elements were closed
-        if closed != 0:
-            current_position = current_position[0:-closed] # pop out when elements are closed
-
-        master.get_child_deep(current_position[-1]).add_child(new_elemnt)
-
-        current_position.append(new_element_id)
-
+    master = Element('master')
+    stack = []
+    for line in code_list:
+        opening = re.search('<[^/\s]+>', line)
+        closing = re.search('</>', line)
+        if opening is not None:
+            new_id = line[opening.start()+1:opening.end()-1]
+            stack.append(Element(new_id))
+        elif closing is not None:
+            if len(stack) > 1:
+                stack[-2].add_child(stack[-1])
+                stack = stack[:-1]
+            else:
+                master.add_child(stack[0])
+                stack = []
+        else:
+            if len(stack) >= 1:
+                stack[-1].text += re.sub('\s+', ' ', line)
+            else:
+                master.text += re.sub('\s+', ' ', line)
+        
     return master
 
 def load_sps(path):
     file = open(path, 'r')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
