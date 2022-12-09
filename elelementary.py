@@ -29,7 +29,7 @@ class Element:
         pass
     
     def print(self, i=0):
-        print('-'*4*i+'>' + self.id + ': ' + self.text)
+        print('-'*4*i+'>' + self.id + ':' + self.text)
         [child.print(i+1) for child in self.children]
     
     def open(self):
@@ -39,46 +39,30 @@ def load_elel(path):
     file = open(path, 'r').read()
     file = re.sub('#.*', '', file) # ignore comments
 
-    code_list = file.splitlines()
-
-
     master = Element('master')
     stack = []
-    for line in code_list:
+    for line in file.splitlines():
         opening = re.search('<[^/\s]+>', line)
-        closing = re.search('</>', line)
+        closing = re.finditer('</>', line)
+        read = True
         if opening is not None:
             new_id = line[opening.start()+1:opening.end()-1]
             stack.append(Element(new_id))
-        elif closing is not None:
+        for closed in closing:
+            read = False
             if len(stack) > 1:
                 stack[-2].add_child(stack[-1])
                 stack = stack[:-1]
             else:
                 master.add_child(stack[0])
                 stack = []
-        else:
+        if read:
             if len(stack) >= 1:
-                stack[-1].text += re.sub('\s+', ' ', line)
+                stack[-1].text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
             else:
-                master.text += re.sub('\s+', ' ', line)
+                master.text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
         
     return master
 
 def load_sps(path):
     file = open(path, 'r')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
