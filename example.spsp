@@ -1,6 +1,15 @@
-<my_nested_element>
-    <color>green</>
-    {on_click}
-        <color>red</>
+<a1>
+    <color>
+        green
+    </>
+    {hover}
+        <color>
+            red
+        </>
     {/}
+</>
+<a2>
+    <background>
+        gray
+    </>
 </>
