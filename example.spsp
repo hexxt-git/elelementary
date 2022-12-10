@@ -1,15 +1,26 @@
 <a1>
-    <color>
+    <text_color>
         green
     </>
     {hover}
-        <color>
+        <text_color>
             red
         </>
     {/}
 </>
+<b1>
+    <custom_property>
+        any_value
+    </>
+</>
 <a2>
-    <background>
+    <background_color>
         gray
     </>
+    <width>
+        500
+    </>
+    {update}
+        {my_function()}
+    {/}
 </>
