@@ -9,6 +9,9 @@
     {/}
 </>
 <b1>
+    <width>
+        69
+    </>
     <custom_property>
         any_value
     </>
@@ -16,9 +19,6 @@
 <a2>
     <background_color>
         gray
-    </>
-    <width>
-        500
     </>
     {update}
         {my_function()}

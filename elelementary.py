@@ -3,6 +3,10 @@ from random import *
 import re
 import copy
 
+def render_rectangle(x, y, width, height, color, border):
+    draw_rectangle(x, x, width, height, color)
+    draw_rectangle_lines(x, x, width, height, border)
+
 class Element:
     def __init__(self, id):
         self.id = id
@@ -27,19 +31,9 @@ class Element:
             if potential_child is not None: return potential_child
         return None
 
-    def add_property(self, key, value):
-        print(self.id, key, value)
-        self.properties.append(Property(key, value))
-
     def set_property(self, key, value):
-        did_set = False
-        for p in self.properties:
-            if p.key == key:
-                p.value = value
-                did_set = True
-        if did_set is False:
-            self.add_property(key, value)
-
+        self.properties[key] = value
+            
     def add_event(self, event):
         self.events.append(event)
 
@@ -47,16 +41,62 @@ class Element:
         for selector in special.selectors:
             element = self.get_child_deep(selector.id)
             for p in selector.properties:
-                element.set_property(p.key, p.value)
+                element.set_property(p, selector.properties[p])
             for e in selector.events:
                 element.add_event(e)
 
     def print(self, i=0):
-        print(' '*4*i + self.id + ': ' + self.text)
+        print(' '*4*i + self.id +'('+str(self.get_width())+', '+str(self.get_height())+'): ' + self.text)
         [child.print(i+1) for child in self.children]
+        
+    def get_width(self):
+        if self.properties['width'] == 'auto':
+            if self.properties['align_children'] == 'vertically':
+                return max(max([child.get_width() for child in self.children]+[0])  + \
+                (int(self.properties['children_horizontal_gap']) * 2                     + \
+                int(self.properties['padding_left']) + int(self.properties['padding_right'])), 5)
+            if self.properties['align_children'] == 'horizontally':
+                return max(sum([child.get_width() for child in self.children])      + \
+                (self.properties['children_horizontal_gap'] * len(self.children)    + \
+                self.properties['padding_left'] + self.properties['padding_right']), 5)
+        if self.properties['width'] == 'fullscreen':
+            return get_screen_width()
+        return int(self.properties['width'])
+
+    def get_height(self):
+        if self.properties['height'] == 'auto':
+            if self.properties['align_children'] == 'vertically':
+                return max(max([child.get_height() for child in self.children]+[0])  + \
+                (int(self.properties['children_horizontal_gap']) * 2                     + \
+                int(self.properties['padding_top']) + int(self.properties['padding_bottom'])), 5)
+            if self.properties['align_children'] == 'horizontally':
+                return max(sum([child.get_height() for child in self.children])      + \
+                (self.properties['children_horizontal_gap'] * len(self.children)    + \
+                self.properties['padding_top'] + self.properties['padding_bottom']), 5)
+        if self.properties['height'] == 'fullscreen':
+            return get_screen_height()
+        return int(self.properties['height'])
     
+    def render(self, x, y):
+        print(x)
+        render_rectangle(x, y, self.get_width(), self.get_height(), color(self.properties['background_color']), color(self.properties['background_color']))
+        [child.render(x+1, y+1) for child in self.children]
+
     def open(self):
-        pass
+        set_config_flags(FLAG_WINDOW_RESIZABLE)
+        init_window(800, 600, self.id)
+
+        set_target_fps(50)
+        while not window_should_close():
+            begin_drawing()
+            clear_background(color('dark_grey'))
+            self.render(0, 0)
+
+            end_drawing()
+        close_window()
+    
+    def close(self):
+        close_window()
 
 # selector
 #     property
@@ -77,16 +117,16 @@ class Special:
 class Selector:
     def __init__(self, id):
         self.id = id
-        self.properties = []
+        self.properties = {}
         self.events = []
 
     def print(self, i=0):
         print(' '*4*i + self.id + ': ')
-        [p.print(i+1) for p in self.properties]
+        [print_property(p, self.properties[p], i+1) for p in self.properties]
         [e.print(i+1) for e in self.events]
     
-    def add_property(self, property):
-        self.properties.append(property)
+    def add_property(self, key, value):
+        self.properties[key] = value
     
     def add_event(self, event):
         self.events.append(event)
@@ -94,16 +134,16 @@ class Selector:
 class Event:
     def __init__(self, activation):
         self.activation = activation
-        self.properties = []
+        self.properties = {}
         self.functions = []
     
     def print(self, i=0):
         print(' '*4*i + self.activation + ': ')
-        [p.print(i+1) for p in self.properties]
+        [print_property(p, self.properties[p], i+1) for p in self.properties]
         [f.print(i+1) for f in self.functions]
         
-    def add_property(self, property):
-        self.properties.append(property)
+    def add_property(self, key, value):
+        self.properties[key] = value
     
     def add_function(self, function):
         self.functions.append(function)
@@ -114,13 +154,8 @@ class Function:
     def print(self, i=0):
         print(' '*4*i + self.execute + '')
 
-class Property:
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-
-    def print(self, i=0):
-        print(' '*4*i + self.key + ': ' + self.value)
+def print_property(key, value, i=0):
+    print(' '*4*i + key + ': ' + value)
 
 colors = {
     'transparent': Color(255, 255, 255, 0),
@@ -153,36 +188,40 @@ def hex_to_rgb(value): # couldnt be bothered to write my own so copied https://s
     return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
 def color(string):
+    if string == 'random':
+        return Color(randint(50, 200), randint(50, 200), randint(50, 200), 255)
     if string in colors:
         return colors[string]
     if string[0] == '#':
         return Color(*hex_to_rgb(string), 255)
-    return 
+    return color('lime')
 
-default_properties = [
-    Property('width', 'auto'),
-    Property('height', 'auto'),
-    Property('x_offset', '0'),
-    Property('y_offset', '0'),
-    Property('children_vertical_align', 'center'),
-    Property('children_horizontal_align', 'center'),
-    Property('padding_left', '0'),
-    Property('padding_right', '0'),
-    Property('padding_top', '0'),
-    Property('padding_down', '0'),
-    Property('text_size', '16'),
-    Property('text_color', 'black'),
-    Property('background_color', 'white'),
-    Property('border', '0'),
-    Property('border_color', 'green'),
-    Property('cursor', 'default'),
-]
+default_properties = {
+    'width': 'auto',
+    'height': 'auto',
+    'x_offset': '0',
+    'y_offset': '0',
+    'align_children': 'vertically',
+    'children_vertical_align': 'center',
+    'children_horizontal_align': 'center',
+    'children_vertical_gap': '0',
+    'children_horizontal_gap': '0',
+    'padding_left': '1',
+    'padding_right': '1',
+    'padding_top': '1',
+    'padding_bottom': '1',
+    'text_size': '16',
+    'text_color': 'black',
+    'background_color': 'white',
+    'border': 'transparent',
+    'cursor': 'default',
+}
 
 def load_elel(path):
     file = open(path, 'r').read()
     file = re.sub('#.*', '', file)
 
-    main = Element('main')
+    main = Element(path)
     stack = []
     for line in file.splitlines():
         opened = re.search('<[^/\s]+>', line)
@@ -223,7 +262,7 @@ def load_sps(path):
             if current_selector is None:
                 current_selector = Selector(line[opened.start()+1:opened.end()-1])
             else:
-                current_property = Property(line[opened.start()+1:opened.end()-1], '')
+                current_property = {line[opened.start()+1:opened.end()-1]: ''}
         elif opened_event is not None:
             if current_event is None:
                 current_event = Event(line[opened_event.start()+1:opened_event.end()-1])
@@ -233,10 +272,10 @@ def load_sps(path):
         if closed is not None:
             if current_property is not None:
                 if current_event is None:
-                    current_selector.add_property(current_property)
+                    current_selector.add_property(list(current_property)[0], current_property[list(current_property)[0]])
                     current_property = None
                 else:
-                    current_event.add_property(current_property)
+                    current_event.add_property(list(current_property)[0], current_property[list(current_property)[0]])
                     current_property = None
             else:
                 special.add_selector(current_selector)
@@ -247,6 +286,6 @@ def load_sps(path):
             current_event = None
 
         if opened is None and opened_event is None and closed is None and closed_event is None and current_property is not None:
-            current_property.value += re.sub('\s+', '', line) 
+            current_property[list(current_property)[0]] += re.sub('\s+', '', line) 
 
     return special
