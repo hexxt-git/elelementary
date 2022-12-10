@@ -1,50 +1,15 @@
- text
 <a1>
-    a1 text
-    a1 text2
+    a1
     <b1>
-        b1 text
-        <c1>
-            c1 text
-        </>
-        <c2>
-            c2 text
-        </>
-        <c3>
-            c3 text
-        </>
+        b1
     </>
-    <b2>
-        b2 text
-        <cc1>
-            cc1 text
-        </>
-        <cc2>
-            cc2 text
-        </>
-        <cc3>
-            cc3 text
-    </></>
-    <b3>
-        b3 text
-        <ccc1>
-            ccc1 text
-        </>
-        b3 text 2
-        <ccc2>
-            ccc2 text
-        </>
-        <ccc3>
-            ccc3 text
-        </>
+    <b11>
+        b11
     </>
 </>
 <a2>
-    a2 text
-    <bb1>
-        bb1 text
+    a2
+    <b2>
+        b2
     </>
-</>
-<a3>
-    a3 text
 </>

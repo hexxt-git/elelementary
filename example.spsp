@@ -1,26 +1,33 @@
-<a1>
-    <text_color>
-        green
+<example.elel>
+    <background_color>
+        dark_gray
     </>
-    {hover}
-        <text_color>
-            red
-        </>
-    {/}
 </>
-<b1>
+<a1>
     <width>
-        69
+        150
     </>
-    <custom_property>
-        any_value
+    <border>
+        red
     </>
 </>
 <a2>
-    <background_color>
-        gray
+    <width>
+        150
     </>
-    {update}
-        {my_function()}
-    {/}
+</>
+<b1>
+    <background_color>
+        green
+    </>
+</>
+<b11>
+    <background_color>
+        yellow
+    </>
+</>
+<b2>
+    <background_color>
+        orange
+    </>
 </>

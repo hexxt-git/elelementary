@@ -4,8 +4,13 @@ import re
 import copy
 
 def render_rectangle(x, y, width, height, color, border):
-    draw_rectangle(x, x, width, height, color)
-    draw_rectangle_lines(x, x, width, height, border)
+    draw_rectangle(x, y, width, height, color)
+    draw_rectangle_lines(x, y, width, height, border)
+    return None
+
+def render_text(text, x, y, size, color):
+    draw_text(text, x, y, size, color)
+    return None
 
 class Element:
     def __init__(self, id):
@@ -40,6 +45,8 @@ class Element:
     def bind(self, special):
         for selector in special.selectors:
             element = self.get_child_deep(selector.id)
+            if element is None:
+                continue
             for p in selector.properties:
                 element.set_property(p, selector.properties[p])
             for e in selector.events:
@@ -51,14 +58,17 @@ class Element:
         
     def get_width(self):
         if self.properties['width'] == 'auto':
-            if self.properties['align_children'] == 'vertically':
-                return max(max([child.get_width() for child in self.children]+[0])  + \
-                (int(self.properties['children_horizontal_gap']) * 2                     + \
-                int(self.properties['padding_left']) + int(self.properties['padding_right'])), 5)
+            if self.properties['align_children'] == 'vertically': # TDOD: include the text
+                return max(max([child.get_width() for child in self.children]+[0]) \
+                    +int(self.properties['padding_left'])\
+                    +int(self.properties['padding_right'])\
+                    , 50)
             if self.properties['align_children'] == 'horizontally':
-                return max(sum([child.get_width() for child in self.children])      + \
-                (self.properties['children_horizontal_gap'] * len(self.children)    + \
-                self.properties['padding_left'] + self.properties['padding_right']), 5)
+                return max(sum([child.get_width()+int(self.properties['children_horizontal_gap']) for child in self.children])\
+                    +(int(self.properties['children_horizontal_gap']) * len(self.children)\
+                    +int(self.properties['padding_left']) + int(self.properties['padding_right']))\
+                    -int(self.properties['children_horizontal_gap'])\
+                    , 50)
         if self.properties['width'] == 'fullscreen':
             return get_screen_width()
         return int(self.properties['width'])
@@ -66,25 +76,38 @@ class Element:
     def get_height(self):
         if self.properties['height'] == 'auto':
             if self.properties['align_children'] == 'vertically':
-                return max(max([child.get_height() for child in self.children]+[0])  + \
-                (int(self.properties['children_horizontal_gap']) * 2                     + \
-                int(self.properties['padding_top']) + int(self.properties['padding_bottom'])), 5)
+                return max(sum([child.get_height() + int(self.properties['children_vertical_gap']) for child in self.children]+[0])\
+                    +int(self.properties['padding_top'])\
+                    +int(self.properties['padding_bottom'])\
+                    -int(self.properties['children_horizontal_gap'])\
+                    , 50)
             if self.properties['align_children'] == 'horizontally':
-                return max(sum([child.get_height() for child in self.children])      + \
-                (self.properties['children_horizontal_gap'] * len(self.children)    + \
-                self.properties['padding_top'] + self.properties['padding_bottom']), 5)
+                return max(max([child.get_height() for child in self.children])\
+                +(int(self.properties['children_horizontal_gap']) * len(self.children)\
+                +int(self.properties['padding_top'])\
+                +int(self.properties['padding_bottom']))\
+                , 50)
         if self.properties['height'] == 'fullscreen':
             return get_screen_height()
         return int(self.properties['height'])
     
     def render(self, x, y):
-        print(x)
-        render_rectangle(x, y, self.get_width(), self.get_height(), color(self.properties['background_color']), color(self.properties['background_color']))
-        [child.render(x+1, y+1) for child in self.children]
+        render_rectangle(x, y, self.get_width(), self.get_height(), color(self.properties['background_color']), color(self.properties['border']))
+        render_text(self.text, x, y, int(self.properties['text_size']), color(self.properties['text_color']))
+        x += int(self.properties['padding_left'])
+        y += int(self.properties['padding_top'])
+        for child in self.children:
+            child.render(x, y)
+            if self.properties['align_children'] == 'vertically':
+                y += child.get_height()
+                y += int(self.properties['children_vertical_gap'])
+            if self.properties['align_children'] == 'horizontally':
+                x += child.get_width()
+                x += int(self.properties['children_horizontal_gap'])
 
     def open(self):
-        set_config_flags(FLAG_WINDOW_RESIZABLE)
-        init_window(800, 600, self.id)
+        #set_config_flags(FLAG_WINDOW_RESIZABLE)
+        init_window(self.get_width(), self.get_height(), self.id)
 
         set_target_fps(50)
         while not window_should_close():
@@ -202,15 +225,15 @@ default_properties = {
     'x_offset': '0',
     'y_offset': '0',
     'align_children': 'vertically',
-    'children_vertical_align': 'center',
-    'children_horizontal_align': 'center',
-    'children_vertical_gap': '0',
-    'children_horizontal_gap': '0',
-    'padding_left': '1',
-    'padding_right': '1',
-    'padding_top': '1',
-    'padding_bottom': '1',
-    'text_size': '16',
+    'children_vertical_align': 'start',
+    'children_horizontal_align': 'start',
+    'children_vertical_gap': '5',
+    'children_horizontal_gap': '5',
+    'padding_left': '5',
+    'padding_right': '5',
+    'padding_top': '5',
+    'padding_bottom': '5',
+    'text_size': '15',
     'text_color': 'black',
     'background_color': 'white',
     'border': 'transparent',
@@ -241,7 +264,10 @@ def load_elel(path):
                 stack[-1].text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
             else:
                 main.text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
-        
+    
+    main.properties['width'] = '800'
+    main.properties['height'] = '600'
+    
     return main
 
 def load_sps(path):
