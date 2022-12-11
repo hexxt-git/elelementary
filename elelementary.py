@@ -1,4 +1,4 @@
-from pyray import *
+from pyray import * # should probably replace this
 from random import *
 import re
 import copy
@@ -11,6 +11,12 @@ def render_rectangle(x, y, width, height, color, border):
 def render_text(text, x, y, size, color):
     draw_text(text, x, y, size, color)
     return None
+
+def decide_text_lines(text):
+    return len(re.findall('[|]', text)) + 1
+
+def decide_text_width(text, text_size):
+    return max(len(l) for l in text.split('|')) * text_size
 
 class Element:
     def __init__(self, id):
@@ -58,17 +64,19 @@ class Element:
         
     def get_width(self):
         if self.properties['width'] == 'auto':
-            if self.properties['align_children'] == 'vertically': # TDOD: include the text
+            if self.properties['align_children'] == 'vertically':
                 return max(max([child.get_width() for child in self.children]+[0]) \
                     +int(self.properties['padding_left'])\
                     +int(self.properties['padding_right'])\
-                    , 50)
+                    + decide_text_width(self.text, int(self.properties['text_size']))\
+                    , 25)
             if self.properties['align_children'] == 'horizontally':
                 return max(sum([child.get_width()+int(self.properties['children_horizontal_gap']) for child in self.children])\
                     +(int(self.properties['children_horizontal_gap']) * len(self.children)\
                     +int(self.properties['padding_left']) + int(self.properties['padding_right']))\
                     -int(self.properties['children_horizontal_gap'])\
-                    , 50)
+                    +decide_text_width(self.text, int(self.properties['text_size']))\
+                    , 25)
         if self.properties['width'] == 'fullscreen':
             return get_screen_width()
         return int(self.properties['width'])
@@ -80,22 +88,31 @@ class Element:
                     +int(self.properties['padding_top'])\
                     +int(self.properties['padding_bottom'])\
                     -int(self.properties['children_horizontal_gap'])\
-                    , 50)
+                    +decide_text_lines(self.text) * int(self.properties['text_size'])\
+                    , 25)
             if self.properties['align_children'] == 'horizontally':
                 return max(max([child.get_height() for child in self.children])\
                 +(int(self.properties['children_horizontal_gap']) * len(self.children)\
                 +int(self.properties['padding_top'])\
                 +int(self.properties['padding_bottom']))\
-                , 50)
+                +decide_text_lines(self.text) * int(self.properties['text_size'])\
+                , 25)
         if self.properties['height'] == 'fullscreen':
             return get_screen_height()
         return int(self.properties['height'])
     
     def render(self, x, y):
+        x += int(self.properties['x_offset'])
+        y += int(self.properties['y_offset'])
         render_rectangle(x, y, self.get_width(), self.get_height(), color(self.properties['background_color']), color(self.properties['border']))
-        render_text(self.text, x, y, int(self.properties['text_size']), color(self.properties['text_color']))
         x += int(self.properties['padding_left'])
         y += int(self.properties['padding_top'])
+        for line in self.text.split('|'):
+            render_text(line, x, y, int(self.properties['text_size']), color(self.properties['text_color']))
+            y += int(self.properties['text_size'])
+        if self.text == '':
+            y -= int(self.properties['text_size'])
+
         for child in self.children:
             child.render(x, y)
             if self.properties['align_children'] == 'vertically':
@@ -211,6 +228,8 @@ def hex_to_rgb(value): # couldnt be bothered to write my own so copied https://s
     return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
 def color(string):
+    if string == '':
+        return color('lime')
     if string == 'random':
         return Color(randint(50, 200), randint(50, 200), randint(50, 200), 255)
     if string in colors:
@@ -233,7 +252,7 @@ default_properties = {
     'padding_right': '5',
     'padding_top': '5',
     'padding_bottom': '5',
-    'text_size': '15',
+    'text_size': '20',
     'text_color': 'black',
     'background_color': 'white',
     'border': 'transparent',

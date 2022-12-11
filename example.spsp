@@ -2,10 +2,13 @@
     <background_color>
         dark_gray
     </>
+    <align_children>
+        horizontally
+    </>
 </>
 <a1>
     <width>
-        150
+        200
     </>
     <border>
         red
@@ -29,5 +32,8 @@
 <b2>
     <background_color>
         orange
+    </>
+    <text_color>
+        blue
     </>
 </>
