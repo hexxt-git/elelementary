@@ -2,14 +2,9 @@
     <background_color> dark_gray </>
 </>
 <a1>
-    <width> 200 </>
     <border> red </>
     <background_color> #ff66aa </>
-</>
-<a2>
-    <width>
-        150
-    </>
+    <align_children> horizontally </>
 </>
 <b1>
     <background_color>
@@ -20,7 +15,6 @@
     <background_color>
         yellow
     </>
-    <width> 190 </>
 </>
 <b2>
     <background_color>

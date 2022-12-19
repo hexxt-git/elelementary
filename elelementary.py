@@ -12,8 +12,8 @@ def render_text(text, x, y, size, color):
     draw_text(text, x, y, size, color)
     return None
 
-def decide_text_lines(text):
-    return len(re.findall('[|]', text)) + 1
+def decide_text_height(text, text_size):
+    return (len(re.findall('[|]', text)) + 1) * text_size
 
 def decide_text_width(text, text_size):
     return max(len(l) for l in text.split('|')) * text_size
@@ -65,18 +65,17 @@ class Element:
     def get_width(self):
         if self.properties['width'] == 'auto':
             if self.properties['align_children'] == 'vertically':
-                return max(max([child.get_width() for child in self.children]+[0]) \
-                    +int(self.properties['padding_left'])\
-                    +int(self.properties['padding_right'])\
-                    + decide_text_width(self.text, int(self.properties['text_size']))\
-                    , 25)
+                text_size = decide_text_width(self.text, int(self.properties['text_size']))
+                biggest_child = max([child.get_width() for child in self.children]+[0])
+                padding = int(self.properties['padding_left']) + int(self.properties['padding_right']) 
+                return max(text_size, biggest_child) + padding
             if self.properties['align_children'] == 'horizontally':
-                return max(sum([child.get_width()+int(self.properties['children_horizontal_gap']) for child in self.children])\
-                    +(int(self.properties['children_horizontal_gap']) * len(self.children)\
-                    +int(self.properties['padding_left']) + int(self.properties['padding_right']))\
-                    -int(self.properties['children_horizontal_gap'])\
-                    +decide_text_width(self.text, int(self.properties['text_size']))\
-                    , 25)
+                text_size = decide_text_width(self.text, int(self.properties['text_size']))
+                children_size = sum([child.get_width() for child in self.children])
+                gaps = int(self.properties['children_horizontal_gap']) * (len(self.children)) 
+                padding = int(self.properties['padding_left']) + int(self.properties['padding_right']) 
+                return text_size + children_size + gaps + padding
+
         if self.properties['width'] == 'fullscreen':
             return get_screen_width()
         return int(self.properties['width'])
@@ -84,19 +83,16 @@ class Element:
     def get_height(self):
         if self.properties['height'] == 'auto':
             if self.properties['align_children'] == 'vertically':
-                return max(sum([child.get_height() + int(self.properties['children_vertical_gap']) for child in self.children]+[0])\
-                    +int(self.properties['padding_top'])\
-                    +int(self.properties['padding_bottom'])\
-                    -int(self.properties['children_horizontal_gap'])\
-                    +decide_text_lines(self.text) * int(self.properties['text_size'])\
-                    , 25)
+                text_size = decide_text_height(self.text, int(self.properties['text_size']))
+                children_size = sum([child.get_height() for child in self.children]+[0])
+                gaps = int(self.properties['children_vertical_gap']) * (len(self.children))
+                padding = int(self.properties['padding_top']) + int(self.properties['padding_bottom'])
+                return text_size + children_size + gaps + padding
             if self.properties['align_children'] == 'horizontally':
-                return max(max([child.get_height() for child in self.children])\
-                +(int(self.properties['children_horizontal_gap']) * len(self.children)\
-                +int(self.properties['padding_top'])\
-                +int(self.properties['padding_bottom']))\
-                +decide_text_lines(self.text) * int(self.properties['text_size'])\
-                , 25)
+                text_size = decide_text_height(self.text, int(self.properties['text_size']))
+                biggest_child = max([child.get_height() for child in self.children]+[0])
+                padding = int(self.properties['padding_top']) + int(self.properties['padding_bottom'])
+                return max(text_size, biggest_child) + padding
         if self.properties['height'] == 'fullscreen':
             return get_screen_height()
         return int(self.properties['height'])
@@ -107,9 +103,17 @@ class Element:
         render_rectangle(x, y, self.get_width(), self.get_height(), color(self.properties['background_color']), color(self.properties['border']))
         x += int(self.properties['padding_left'])
         y += int(self.properties['padding_top'])
-        for line in self.text.split('|'):
-            render_text(line, x, y, int(self.properties['text_size']), color(self.properties['text_color']))
-            y += int(self.properties['text_size'])
+        if self.properties['align_children'] == 'vertically':
+            for line in self.text.split('|'):
+                render_text(line, x, y, int(self.properties['text_size']), color(self.properties['text_color']))
+                y += int(self.properties['text_size'])
+        if self.properties['align_children'] == 'horizontally':
+            Y = y
+            for line in self.text.split('|'):
+                render_text(line, x, Y, int(self.properties['text_size']), color(self.properties['text_color']))
+            Y += int(self.properties['text_size'])
+            x += decide_text_width(self.text, int(self.properties['text_size']))
+
         if self.text == '':
             y -= int(self.properties['text_size'])
 
