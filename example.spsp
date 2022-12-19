@@ -1,18 +1,10 @@
 <example.elel>
-    <background_color>
-        dark_gray
-    </>
-    <align_children>
-        horizontally
-    </>
+    <background_color> dark_gray </>
 </>
 <a1>
-    <width>
-        200
-    </>
-    <border>
-        red
-    </>
+    <width> 200 </>
+    <border> red </>
+    <background_color> #ff66aa </>
 </>
 <a2>
     <width>
@@ -28,6 +20,7 @@
     <background_color>
         yellow
     </>
+    <width> 190 </>
 </>
 <b2>
     <background_color>

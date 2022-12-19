@@ -261,76 +261,82 @@ default_properties = {
 
 def load_elel(path):
     file = open(path, 'r').read()
-    file = re.sub('#.*', '', file)
+    file = re.sub('//.*', '', file)
 
-    main = Element(path)
+    element = Element(path)
     stack = []
-    for line in file.splitlines():
-        opened = re.search('<[^/\s]+>', line)
-        closed = sum([1 for _ in re.finditer('</>', line)])
-        if opened is not None:
-            new_id = line[opened.start()+1:opened.end()-1]
+    for word in re.split('\s', file):
+        opened = re.search('<[^/\s]+>', word)
+        closed = sum([1 for _ in re.finditer('</>', word)])
+        if opened:
+            new_id = word[opened.start()+1: opened.end()-1]
             stack.append(Element(new_id))
-        for c in range(closed):
-            if len(stack) > 1:
+        
+        for _ in range(closed):
+            if len(stack) >= 2:
                 stack[-2].add_child(stack[-1])
                 stack = stack[:-1]
             else:
-                main.add_child(stack[0])
+                element.add_child(stack[-1])
                 stack = []
-        if closed == 0:
-            if len(stack) >= 1:
-                stack[-1].text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
-            else:
-                main.text += re.sub('\s+', ' ', re.sub('<[^/\s]+>', '', line))
-    
-    main.properties['width'] = '800'
-    main.properties['height'] = '600'
-    
-    return main
+        if len(stack) >= 1:
+            stack[-1].text += re.sub('<.*>', '', word)
+        else:
+            element.text += re.sub('<.*>', '', word)
+        
+    element.properties['width'] = '800'
+    element.properties['height'] = '600'
+
+    return element
 
 def load_sps(path):
     file = open(path, 'r').read()
-    file = re.sub('#.*', '', file)
+    file = re.sub('//.*', '', file)
+
     special = Special()
+    tmp_selector = None
+    tmp_event = None
+    tmp_property = None
+    for word in re.split('\s', file):
+        if word == ' ': 
+            print('a')
+        opened = re.search('<[^/\s]+>', word)
+        closed = sum([1 for _ in re.finditer('</>', word)])
+        opened_event = re.search('{[^/\s]+}', word)
+        closed_event = sum([1 for _ in re.finditer('{/}', word)])
 
-    current_selector = None
-    current_event = None
-    current_property = None
-    for line in file.splitlines():
-        opened = re.search('<[^/\s]+>', line)
-        closed = re.search('</>', line)
-        opened_event = re.search('{[^/\s]+}', line)
-        closed_event = re.search('{/}', line)
+        if opened is not None:
+            if tmp_selector is None:
+                new_selector = word[opened.start()+1: opened.end()-1]
+                tmp_selector = Selector(new_selector)
+            else:
+                new_property = word[opened.start()+1: opened.end()-1]
+                tmp_property = {new_property: ''}
+
+        if opened_event is not None:
+            if tmp_event is None:
+                tmp_event = Event(word[opened_event.start()+1: opened_event.end()-1])
+            else:
+                tmp_event.add_function(Function(word[opened_event.start()+1: opened_event.end()-1]))
         
-        if opened is not None: 
-            if current_selector is None:
-                current_selector = Selector(line[opened.start()+1:opened.end()-1])
+        if tmp_property is not None:
+            tmp_property[list(tmp_property)[0]] += re.sub('([<{].*[}>])|\s+', '', word) + ' '
+        
+        for _ in range(closed):
+            if tmp_property is None:
+                special.add_selector(tmp_selector)
+                tmp_selector = None
             else:
-                current_property = {line[opened.start()+1:opened.end()-1]: ''}
-        elif opened_event is not None:
-            if current_event is None:
-                current_event = Event(line[opened_event.start()+1:opened_event.end()-1])
-            else:
-                current_event.add_function(Function(line[opened_event.start()+1:opened_event.end()-1]))
-
-        if closed is not None:
-            if current_property is not None:
-                if current_event is None:
-                    current_selector.add_property(list(current_property)[0], current_property[list(current_property)[0]])
-                    current_property = None
+                tmp_property[list(tmp_property)[0]] = re.sub('\s', '',tmp_property[list(tmp_property)[0]])
+                if tmp_event is None:
+                    tmp_selector.add_property(list(tmp_property)[0], tmp_property[list(tmp_property)[0]])
+                    tmp_property = None
                 else:
-                    current_event.add_property(list(current_property)[0], current_property[list(current_property)[0]])
-                    current_property = None
-            else:
-                special.add_selector(current_selector)
-                current_selector = None
+                    tmp_event.add_property(list(tmp_property)[0], tmp_property[list(tmp_property)[0]])
+                    tmp_property = None
         
-        if closed_event is not None:
-            current_selector.add_event(current_event)
-            current_event = None
-
-        if opened is None and opened_event is None and closed is None and closed_event is None and current_property is not None:
-            current_property[list(current_property)[0]] += re.sub('\s+', '', line) 
-
+        for _ in range(closed_event):
+            tmp_selector.add_event(tmp_event)
+            tmp_event = None
+    
     return special
