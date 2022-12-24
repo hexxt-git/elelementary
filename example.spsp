@@ -6,6 +6,9 @@
     <background_color> #ff66aa </>
     <align_children> horizontally </>
 </>
+<a2>
+    <children_vertical_gap> 0 </>
+</>
 <b1>
     <background_color>
         green
@@ -22,5 +25,13 @@
     </>
     <text_color>
         blue
+    </>
+    <text_size>
+        36
+    </>
+</>
+<b22>
+    <background_color>
+        random
     </>
 </>

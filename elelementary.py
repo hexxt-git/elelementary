@@ -24,7 +24,7 @@ class Element:
         self.text = ''
         self.children = []
         self.properties = copy.deepcopy(default_properties)
-        self.events = []
+        self.events = [] # events are yet to be implemented.
         
     def add_child(self, child):
         self.children.append(child)
