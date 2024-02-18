@@ -1,6 +1,6 @@
 # elelementary
 
-a programming langauge/ui building system in python i havent had time to complete
+a markup langauge/ui building system in python i havent had time to complete
 
 meant to be like html and css though much less useful
 ![image](https://user-images.githubusercontent.com/88392191/209446520-dd3fe709-b882-4893-9d1e-7735bf8ad369.png)
